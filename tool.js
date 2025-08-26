@@ -14,7 +14,7 @@ const allParts = [
   "Melody & Chords & Bass","Timpani","Triangle"
 ];
 
-// Full cycle order for middle instruments
+// Full cycle order for remaining instruments
 const fullCycle = ["1 Melody","6 Bass","2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
 
 // Instrument definitions
@@ -124,26 +124,27 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     currentGroup[0].sortNumber = parseFloat(currentGroup[0].sortNumber.toFixed(1));
   }
 
-  // Step 2-4: Assign parts with full cycle logic
+  // Step 2-4: Assign parts with fixed cycle logic
   const numericInstruments = numericAssignments;
   if (numericInstruments.length > 0) {
-    // Lowest numeric → "1 Melody"
+    // Lowest numeric → 1 Melody
     numericInstruments[0].assignedPart = "1 Melody";
 
-    // Highest numeric → "6 Bass"
+    // Highest numeric → 6 Bass
     const highestIndex = numericInstruments.length - 1;
     numericInstruments[highestIndex].assignedPart = "6 Bass";
 
-    // Next four instruments after lowest, before highest
+    // Next four instruments after lowest
     const nextFour = numericInstruments.slice(1, Math.min(5, highestIndex));
     const nextFourOrder = ["2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
     nextFour.forEach((instr, i) => {
       instr.assignedPart = nextFourOrder[i % nextFourOrder.length];
     });
 
-    // Remaining instruments
+    // Remaining instruments after lowest+nextFour+highest
     const remaining = numericInstruments.slice(nextFour.length + 1, highestIndex);
     remaining.forEach((instr, i) => {
+      // start cycling from index 0 of fullCycle (repeats all)
       instr.assignedPart = fullCycle[i % fullCycle.length];
     });
   }
