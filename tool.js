@@ -153,14 +153,22 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
   ];
 
   // Display results
-  // Sort final assignments by sortNumber (numeric first, then n/a last)
+ // Sort final assignments by sortNumber (numeric first, then n/a last)
 finalAssignments.sort((a, b) => {
   if (a.sortNumber === "n/a") return 1;
   if (b.sortNumber === "n/a") return -1;
   return a.sortNumber - b.sortNumber;
 });
 
-document.getElementById("output").textContent = JSON.stringify(finalAssignments, null, 2);
+// Create a simple table
+let tableHTML = "<table border='1' cellpadding='5' cellspacing='0'><tr><th>Instrument</th><th>Assigned Part</th></tr>";
+finalAssignments.forEach(inst => {
+  tableHTML += `<tr><td>${inst.instrument}</td><td>${inst.assignedPart}</td></tr>`;
+});
+tableHTML += "</table>";
+
+document.getElementById("output").innerHTML = tableHTML;
+
 
   console.log("Final assignments:", finalAssignments);
 });
