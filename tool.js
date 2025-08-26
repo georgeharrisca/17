@@ -14,16 +14,10 @@ const allParts = [
   "Melody & Chords & Bass","Timpani","Triangle"
 ];
 
-const cycleOrder = [
-  "1 Melody",
-  "2 Harmony",
-  "4 Counter Melody",
-  "3 Harmony II",
-  "5 Counter Melody Harmony",
-  "6 Bass"
-];
+// Full cycle order for middle instruments
+const fullCycle = ["1 Melody","6 Bass","2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
 
-// Your instrument definitions
+// Instrument definitions
 const instrumentDefinitions = {
   "Violin":      { instrumentPart: "Melody", Octave: +1 },
   "Viola":       { instrumentPart: "Harmony II", Octave: 0 },
@@ -96,10 +90,11 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     }
   });
 
-  // Step 1: Sort numeric instruments and apply tie-breaking decimals
+  // Step 1: Sort numeric instruments and tie-break
   const numericAssignments = assignments.filter(a => a.sortNumber !== "n/a");
   numericAssignments.sort((a,b) => a.sortNumber - b.sortNumber);
 
+  // Tie-break by alphabet if sortNumber is same
   let currentGroup = [];
   let currentSortNumber = null;
 
@@ -129,46 +124,48 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     currentGroup[0].sortNumber = parseFloat(currentGroup[0].sortNumber.toFixed(1));
   }
 
-  // Step 2: Assign lowest → 1 Melody, highest → 6 Bass
-  const middleNumeric = numericAssignments.filter(a => a.assignedPart === "");
-  if (middleNumeric.length > 0) {
-    middleNumeric.sort((a,b) => a.sortNumber - b.sortNumber);
-    middleNumeric[0].assignedPart = "1 Melody";
-    middleNumeric[middleNumeric.length - 1].assignedPart = "6 Bass";
+  // Step 2-4: Assign parts with full cycle logic
+  const numericInstruments = numericAssignments;
+  if (numericInstruments.length > 0) {
+    // Lowest numeric → "1 Melody"
+    numericInstruments[0].assignedPart = "1 Melody";
+
+    // Highest numeric → "6 Bass"
+    const highestIndex = numericInstruments.length - 1;
+    numericInstruments[highestIndex].assignedPart = "6 Bass";
+
+    // Next four instruments after lowest, before highest
+    const nextFour = numericInstruments.slice(1, Math.min(5, highestIndex));
+    const nextFourOrder = ["2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
+    nextFour.forEach((instr, i) => {
+      instr.assignedPart = nextFourOrder[i % nextFourOrder.length];
+    });
+
+    // Remaining instruments
+    const remaining = numericInstruments.slice(nextFour.length + 1, highestIndex);
+    remaining.forEach((instr, i) => {
+      instr.assignedPart = fullCycle[i % fullCycle.length];
+    });
   }
 
-  // Step 3: Cycle remaining middle instruments
-  const remainingMiddle = middleNumeric.filter(a => a.assignedPart === "");
-  let cycleIndex = 1; // skip first ("1 Melody")
-  remainingMiddle.forEach(instr => {
-    instr.assignedPart = cycleOrder[cycleIndex];
-    cycleIndex++;
-    if (cycleIndex >= cycleOrder.length - 1) cycleIndex = 1;
-  });
-
-  // Merge final results
+  // Merge final results and sort by sortNumber
   const finalAssignments = [
     ...numericAssignments,
     ...assignments.filter(a => a.sortNumber === "n/a")
   ];
 
-  // Display results
- // Sort final assignments by sortNumber (numeric first, then n/a last)
-finalAssignments.sort((a, b) => {
-  if (a.sortNumber === "n/a") return 1;
-  if (b.sortNumber === "n/a") return -1;
-  return a.sortNumber - b.sortNumber;
-});
+  finalAssignments.sort((a, b) => {
+    if (a.sortNumber === "n/a") return 1;
+    if (b.sortNumber === "n/a") return -1;
+    return a.sortNumber - b.sortNumber;
+  });
 
-// Create a simple table
-let tableHTML = "<table border='1' cellpadding='5' cellspacing='0'><tr><th>Instrument</th><th>Assigned Part</th></tr>";
-finalAssignments.forEach(inst => {
-  tableHTML += `<tr><td>${inst.instrument}</td><td>${inst.assignedPart}</td></tr>`;
-});
-tableHTML += "</table>";
+  // Display as table with only instrument and assignedPart
+  let tableHTML = "<table><tr><th>Instrument</th><th>Assigned Part</th></tr>";
+  finalAssignments.forEach(inst => {
+    tableHTML += `<tr><td>${inst.instrument}</td><td>${inst.assignedPart}</td></tr>`;
+  });
+  tableHTML += "</table>";
 
-document.getElementById("output").innerHTML = tableHTML;
-
-
-  console.log("Final assignments:", finalAssignments);
+  document.getElementById("output").innerHTML = tableHTML;
 });
