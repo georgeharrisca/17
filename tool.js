@@ -153,6 +153,14 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
   ];
 
   // Display results
-  document.getElementById("output").textContent = JSON.stringify(finalAssignments, null, 2);
+  // Sort final assignments by sortNumber (numeric first, then n/a last)
+finalAssignments.sort((a, b) => {
+  if (a.sortNumber === "n/a") return 1;
+  if (b.sortNumber === "n/a") return -1;
+  return a.sortNumber - b.sortNumber;
+});
+
+document.getElementById("output").textContent = JSON.stringify(finalAssignments, null, 2);
+
   console.log("Final assignments:", finalAssignments);
 });
