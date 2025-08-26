@@ -9,7 +9,8 @@
     label { display: block; margin: 10px 0; }
     input { width: 50px; margin-left: 10px; }
     button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
-    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    table { border-collapse: collapse; margin-top: 20px; }
+    table, th, td { border: 1px solid #000; padding: 5px 10px; text-align: left; }
   </style>
 </head>
 <body>
@@ -22,7 +23,7 @@
 </form>
 
 <h3>Processed Assigned Parts:</h3>
-<pre id="output"></pre>
+<div id="output"></div>
 
 <script src="tool.js?v=1"></script>
 </body>
