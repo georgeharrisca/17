@@ -74,13 +74,30 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     }
   });
 
-  // Step 1: Sort numeric instruments & tie-break alphabetically
+  // Step 1: Numeric instruments
   let numericInstruments = assignments.filter(a => !a.finalized);
+
+  // Sort by sortNumber ascending and alphabetically
   numericInstruments.sort((a,b) => {
     if (a.sortNumber === b.sortNumber) return a.instrument.localeCompare(b.instrument);
     return a.sortNumber - b.sortNumber;
   });
 
+  // Step 1a: Tie-breaking decimals
+  let lastSort = null;
+  let tieCount = 0;
+  numericInstruments.forEach(instr => {
+    if (instr.sortNumber === lastSort) {
+      tieCount += 1;
+      instr.sortNumber = Number((instr.sortNumber + tieCount/10).toFixed(1));
+    } else {
+      tieCount = 0;
+      instr.sortNumber = Number(instr.sortNumber.toFixed(1));
+      lastSort = instr.sortNumber;
+    }
+  });
+
+  // Step 2-4: Assign parts with finalized stages
   if (numericInstruments.length > 0) {
     // Lowest → 1 Melody
     numericInstruments[0].assignedPart = "1 Melody";
@@ -91,7 +108,7 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     numericInstruments[highestIndex].assignedPart = "6 Bass";
     numericInstruments[highestIndex].finalized = true;
 
-    // Next 4 lowest non-finalized → 2,4,3,5
+    // Next four lowest non-finalized → 2,4,3,5
     const nextFour = numericInstruments.filter(a => !a.finalized).slice(0,4);
     const nextFourOrder = ["2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
     nextFour.forEach((instr, i) => {
@@ -107,24 +124,23 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     });
   }
 
- // Final display sorted by sortNumber
-const finalAssignments = [...assignments];
-finalAssignments.sort((a,b) => {
-  if (a.sortNumber === "n/a") return 1;
-  if (b.sortNumber === "n/a") return -1;
-  return a.sortNumber - b.sortNumber;
-});
+  // Final display sorted by sortNumber
+  const finalAssignments = [...assignments];
+  finalAssignments.sort((a,b) => {
+    if (a.sortNumber === "n/a") return 1;
+    if (b.sortNumber === "n/a") return -1;
+    return a.sortNumber - b.sortNumber;
+  });
 
-let tableHTML = "<table><tr><th>Instrument</th><th>Sort Number</th><th>Assigned Part</th></tr>";
-finalAssignments.forEach(instr => {
-  tableHTML += `<tr>
-    <td>${instr.instrument}</td>
-    <td>${instr.sortNumber}</td>
-    <td>${instr.assignedPart}</td>
-  </tr>`;
-});
-tableHTML += "</table>";
+  let tableHTML = "<table><tr><th>Instrument</th><th>Sort Number</th><th>Assigned Part</th></tr>";
+  finalAssignments.forEach(instr => {
+    tableHTML += `<tr>
+      <td>${instr.instrument}</td>
+      <td>${instr.sortNumber}</td>
+      <td>${instr.assignedPart}</td>
+    </tr>`;
+  });
+  tableHTML += "</table>";
 
-document.getElementById("output").innerHTML = tableHTML;
-
+  document.getElementById("output").innerHTML = tableHTML;
 });
