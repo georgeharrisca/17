@@ -1,21 +1,7 @@
-// Part lists
-const sortableParts = [
-  "Melody",
-  "Harmony I",
-  "Harmony II",
-  "Counter Melody",
-  "Counter Melody Harmony",
-  "Bass"
-];
-
-const allParts = [
-  ...sortableParts,
-  "Groove","Chords","Drum Kit","Melody & Bass","Melody & Chords","Chords & Bass",
-  "Melody & Chords & Bass","Timpani","Triangle"
-];
-
-// Full cycle order for remaining instruments
-const fullCycle = ["1 Melody","6 Bass","2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
+// Full list of part roles
+const sortableParts = ["Melody","Harmony I","Harmony II","Counter Melody","Counter Melody Harmony","Bass"];
+const allParts = [...sortableParts,"Groove","Chords","Drum Kit","Melody & Bass","Melody & Chords","Chords & Bass","Melody & Chords & Bass","Timpani","Triangle"];
+const middleCycle = ["1 Melody","6 Bass","2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
 
 // Instrument definitions
 const instrumentDefinitions = {
@@ -35,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const optionsDiv = document.getElementById("instrumentOptions");
   Object.keys(instrumentDefinitions).forEach(inst => {
     const label = document.createElement("label");
-    label.textContent = inst + ": ";
+    label.textContent = inst + ":";
     const numberInput = document.createElement("input");
     numberInput.type = "number";
     numberInput.min = 0;
@@ -46,13 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Form submission processing
+// Process form submission
 document.getElementById("instrumentForm").addEventListener("submit", event => {
   event.preventDefault();
-
   const assignments = [];
 
-  // Create instrument instances based on quantities
+  // Generate instrument instances
   Object.keys(instrumentDefinitions).forEach(inst => {
     const count = parseInt(document.querySelector(`input[name='${inst}']`).value);
     for (let i = 1; i <= count; i++) {
@@ -60,9 +45,7 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
       let sortNum;
 
       if (sortableParts.includes(partRole)) {
-        sortNum = sortableParts.indexOf(partRole) + 1;
-        const octave = instrumentDefinitions[inst].Octave || 0;
-        sortNum -= octave;
+        sortNum = sortableParts.indexOf(partRole) + 1 - (instrumentDefinitions[inst].Octave || 0);
       } else {
         sortNum = "n/a";
       }
@@ -72,7 +55,7 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
         instrumentPart: partRole,
         assignedPart: "",
         sortNumber: sortNum,
-        Octave: instrumentDefinitions[inst].Octave
+        finalized: false
       });
     }
   });
@@ -82,89 +65,59 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     return;
   }
 
-  // Step 0: Pre-assign instruments 7-15
+  // Step 0: Pre-assign instrumentPart 7-15
   assignments.forEach(instr => {
     const partIndex = allParts.indexOf(instr.instrumentPart);
     if (partIndex >= 6) {
       instr.assignedPart = instr.instrumentPart;
+      instr.finalized = true;
     }
   });
 
-  // Step 1: Sort numeric instruments and tie-break
-  const numericAssignments = assignments.filter(a => a.sortNumber !== "n/a");
-  numericAssignments.sort((a,b) => a.sortNumber - b.sortNumber);
-
-  // Tie-break by alphabet if sortNumber is same
-  let currentGroup = [];
-  let currentSortNumber = null;
-
-  numericAssignments.forEach(instr => {
-    if (instr.sortNumber !== currentSortNumber) {
-      if (currentGroup.length > 1) {
-        currentGroup.sort((a, b) => a.instrument.localeCompare(b.instrument));
-        currentGroup.forEach((inst, i) => {
-          inst.sortNumber = parseFloat((currentSortNumber + (i + 1)/10).toFixed(1));
-        });
-      } else if (currentGroup.length === 1) {
-        currentGroup[0].sortNumber = parseFloat(currentGroup[0].sortNumber.toFixed(1));
-      }
-      currentGroup = [instr];
-      currentSortNumber = instr.sortNumber;
-    } else {
-      currentGroup.push(instr);
-    }
+  // Step 1: Sort numeric instruments & tie-break alphabetically
+  let numericInstruments = assignments.filter(a => !a.finalized);
+  numericInstruments.sort((a,b) => {
+    if (a.sortNumber === b.sortNumber) return a.instrument.localeCompare(b.instrument);
+    return a.sortNumber - b.sortNumber;
   });
 
-  if (currentGroup.length > 1) {
-    currentGroup.sort((a, b) => a.instrument.localeCompare(b.instrument));
-    currentGroup.forEach((inst, i) => {
-      inst.sortNumber = parseFloat((currentSortNumber + (i + 1)/10).toFixed(1));
-    });
-  } else if (currentGroup.length === 1) {
-    currentGroup[0].sortNumber = parseFloat(currentGroup[0].sortNumber.toFixed(1));
-  }
-
-  // Step 2-4: Assign parts with fixed cycle logic
-  const numericInstruments = numericAssignments;
   if (numericInstruments.length > 0) {
-    // Lowest numeric → 1 Melody
+    // Lowest → 1 Melody
     numericInstruments[0].assignedPart = "1 Melody";
+    numericInstruments[0].finalized = true;
 
-    // Highest numeric → 6 Bass
+    // Highest → 6 Bass
     const highestIndex = numericInstruments.length - 1;
     numericInstruments[highestIndex].assignedPart = "6 Bass";
+    numericInstruments[highestIndex].finalized = true;
 
-    // Next four instruments after lowest
-    const nextFour = numericInstruments.slice(1, Math.min(5, highestIndex));
+    // Next 4 lowest non-finalized → 2,4,3,5
+    const nextFour = numericInstruments.filter(a => !a.finalized).slice(0,4);
     const nextFourOrder = ["2 Harmony","4 Counter Melody","3 Harmony II","5 Counter Melody Harmony"];
     nextFour.forEach((instr, i) => {
-      instr.assignedPart = nextFourOrder[i % nextFourOrder.length];
+      instr.assignedPart = nextFourOrder[i];
+      instr.finalized = true;
     });
 
-    // Remaining instruments after lowest+nextFour+highest
-    const remaining = numericInstruments.slice(nextFour.length + 1, highestIndex);
+    // Remaining → cycle middleCycle
+    let remaining = numericInstruments.filter(a => !a.finalized);
     remaining.forEach((instr, i) => {
-      // start cycling from index 0 of fullCycle (repeats all)
-      instr.assignedPart = fullCycle[i % fullCycle.length];
+      instr.assignedPart = middleCycle[i % middleCycle.length];
+      instr.finalized = true;
     });
   }
 
-  // Merge final results and sort by sortNumber
-  const finalAssignments = [
-    ...numericAssignments,
-    ...assignments.filter(a => a.sortNumber === "n/a")
-  ];
-
-  finalAssignments.sort((a, b) => {
+  // Final display sorted by sortNumber
+  const finalAssignments = [...assignments];
+  finalAssignments.sort((a,b) => {
     if (a.sortNumber === "n/a") return 1;
     if (b.sortNumber === "n/a") return -1;
     return a.sortNumber - b.sortNumber;
   });
 
-  // Display as table with only instrument and assignedPart
   let tableHTML = "<table><tr><th>Instrument</th><th>Assigned Part</th></tr>";
-  finalAssignments.forEach(inst => {
-    tableHTML += `<tr><td>${inst.instrument}</td><td>${inst.assignedPart}</td></tr>`;
+  finalAssignments.forEach(instr => {
+    tableHTML += `<tr><td>${instr.instrument}</td><td>${instr.assignedPart}</td></tr>`;
   });
   tableHTML += "</table>";
 
