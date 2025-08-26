@@ -107,19 +107,24 @@ document.getElementById("instrumentForm").addEventListener("submit", event => {
     });
   }
 
-  // Final display sorted by sortNumber
-  const finalAssignments = [...assignments];
-  finalAssignments.sort((a,b) => {
-    if (a.sortNumber === "n/a") return 1;
-    if (b.sortNumber === "n/a") return -1;
-    return a.sortNumber - b.sortNumber;
-  });
+ // Final display sorted by sortNumber
+const finalAssignments = [...assignments];
+finalAssignments.sort((a,b) => {
+  if (a.sortNumber === "n/a") return 1;
+  if (b.sortNumber === "n/a") return -1;
+  return a.sortNumber - b.sortNumber;
+});
 
-  let tableHTML = "<table><tr><th>Instrument</th><th>Assigned Part</th></tr>";
-  finalAssignments.forEach(instr => {
-    tableHTML += `<tr><td>${instr.instrument}</td><td>${instr.assignedPart}</td></tr>`;
-  });
-  tableHTML += "</table>";
+let tableHTML = "<table><tr><th>Instrument</th><th>Sort Number</th><th>Assigned Part</th></tr>";
+finalAssignments.forEach(instr => {
+  tableHTML += `<tr>
+    <td>${instr.instrument}</td>
+    <td>${instr.sortNumber}</td>
+    <td>${instr.assignedPart}</td>
+  </tr>`;
+});
+tableHTML += "</table>";
 
-  document.getElementById("output").innerHTML = tableHTML;
+document.getElementById("output").innerHTML = tableHTML;
+
 });
