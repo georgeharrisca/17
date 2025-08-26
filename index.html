@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instrument Sorting Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+    label { display: block; margin: 10px 0; }
+    input { width: 50px; margin-left: 10px; }
+    button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+<h1>Instrument Sorting Tool</h1>
+
+<form id="instrumentForm">
+  <div id="instrumentOptions"></div>
+  <button type="submit">Process Instruments</button>
+</form>
+
+<h3>Processed Assigned Parts:</h3>
+<pre id="output"></pre>
+
+<script src="tool.js?v=1"></script>
+</body>
+</html>
